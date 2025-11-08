@@ -1,0 +1,197 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Games Demo — Mines | Aviator | Roulette</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;padding:20px;background:#0f172a;color:#e6eef8}
+    .wrap{max-width:1000px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center}
+    h1{margin:0;font-size:20px}
+    nav{margin-top:18px;display:flex;gap:8px}
+    button.tab{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#081027;color:inherit;cursor:pointer}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));padding:16px;border-radius:12px;margin-top:18px}
+    .grid{display:grid;gap:6px}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .btn{padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+    .btn.primary{background:#06b6d4;color:#042024}
+    .cell{width:44px;height:44px;border-radius:6px;background:#06202b;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
+    .cell.revealed{background:#0b3a3f;color:#fff}
+    .cell.mine{background:#7b1e1e;color:#fff}
+    .stat{margin-left:12px}
+    .log{margin-top:12px;font-size:13px;opacity:0.9}
+    footer{margin-top:18px;font-size:13px;color:#a8c0c8}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Mini Games Demo — Mines | Aviator | Roulette</h1>
+      <div style="margin-left:auto;font-size:13px;opacity:0.9">Demo (no real money) — For production, legal compliance required.</div>
+    </header><nav>
+  <button class="tab" data-tab="mines">Mines</button>
+  <button class="tab" data-tab="aviator">Aviator</button>
+  <button class="tab" data-tab="roulette">Roulette</button>
+</nav>
+
+<div id="mines" class="card" style="display:none">
+  <div class="controls">
+    <label>Grid:
+      <select id="mines-size"><option value="5">5x5</option><option value="8">8x8</option><option value="10">10x10</option></select>
+    </label>
+    <label>Mines:
+      <input id="mines-count" type="number" value="5" min="1" style="width:64px" />
+    </label>
+    <button id="mines-start" class="btn primary">Start Game</button>
+    <div class="stat">Status: <span id="mines-status">Idle</span></div>
+    <div class="stat">Score (revealed): <span id="mines-score">0</span></div>
+  </div>
+  <div id="mines-board" class="grid"></div>
+  <div class="log" id="mines-log"></div>
+</div>
+
+<div id="aviator" class="card" style="display:none">
+  <div class="controls">
+    <label>Bet Amount: <input id="aviator-bet" value="10" style="width:80px" /></label>
+    <button id="aviator-start" class="btn primary">Start Round</button>
+    <button id="aviator-cashout" class="btn" disabled>Cashout</button>
+    <div class="stat">Multiplier: <span id="aviator-mult">1.00x</span></div>
+    <div class="stat">State: <span id="aviator-state">Idle</span></div>
+  </div>
+  <div class="log" id="aviator-log"></div>
+</div>
+
+<div id="roulette" class="card" style="display:none">
+  <div class="controls">
+    <label>Bet Amount: <input id="roulette-bet" value="10" style="width:80px" /></label>
+    <label>Choice:
+      <select id="roulette-choice"><option value="red">Red</option><option value="black">Black</option><option value="green">Green (0)</option></select>
+    </label>
+    <button id="roulette-spin" class="btn primary">Spin</button>
+    <div class="stat">Last Result: <span id="roulette-last">-</span></div>
+  </div>
+  <div class="log" id="roulette-log"></div>
+</div>
+
+<footer>
+  <strong>Important:</strong> This is a **demo** for learning and prototyping only. Do NOT use for real-money operations without proper licensing, KYC/AML, and legal advice.
+</footer>
+
+  </div>  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+      document.querySelectorAll('.card').forEach(c=>c.style.display='none');
+      document.getElementById(b.dataset.tab).style.display='block';
+    }));
+    // Activate default
+    document.querySelector('.tab[data-tab="mines"]').click();
+
+    // ---- MINES GAME ----
+    const minesBoard = document.getElementById('mines-board');
+    const minesLog = document.getElementById('mines-log');
+    let minesState = null;
+
+    function makeBoard(size, mines){
+      const total = size*size;
+      const mineSet = new Set();
+      while(mineSet.size < mines) mineSet.add(Math.floor(Math.random()*total));
+      const cells = [];
+      for(let i=0;i<total;i++) cells.push({index:i, mine:mineSet.has(i), revealed:false});
+      return {size,total,cells,remaining:total-mines,revealed:0};
+    }
+
+    function renderMines(){
+      minesBoard.innerHTML='';
+      minesBoard.style.gridTemplateColumns = `repeat(${minesState.size},44px)`;
+      minesState.cells.forEach(c=>{
+        const el = document.createElement('div'); el.className='cell'+(c.revealed?' revealed':''); el.textContent='';
+        el.addEventListener('click',()=>onCellClick(c.index,el));
+        minesBoard.appendChild(el);
+      });
+      document.getElementById('mines-score').textContent = minesState.revealed;
+    }
+
+    function onCellClick(i,el){
+      if(minesState.cells[i].revealed) return;
+      minesState.cells[i].revealed = true;
+      if(minesState.cells[i].mine){
+        el.classList.add('mine'); el.textContent='💣';
+        document.getElementById('mines-status').textContent='Lost';
+        minesLog.textContent = 'You hit a mine. Game over.';
+        revealAllMines();
+      } else {
+        el.classList.add('revealed');
+        el.textContent = '';
+        minesState.revealed++;
+        document.getElementById('mines-score').textContent = minesState.revealed;
+        if(minesState.revealed >= minesState.remaining){
+          document.getElementById('mines-status').textContent='Won';
+          minesLog.textContent = 'You cleared the safe cells — YOU WIN!';
+          revealAllMines(false);
+        }
+      }
+    }
+
+    function revealAllMines(show=true){
+      const children = minesBoard.children;
+      minesState.cells.forEach((c,idx)=>{
+        const el = children[idx];
+        if(c.mine){ el.classList.add('mine'); el.textContent = show? '💣':''; }
+      });
+    }
+
+    document.getElementById('mines-start').addEventListener('click',()=>{
+      const size = parseInt(document.getElementById('mines-size').value);
+      const mines = parseInt(document.getElementById('mines-count').value);
+      minesState = makeBoard(size, Math.max(1,Math.min(mines, size*size-1)));
+      document.getElementById('mines-status').textContent='Playing';
+      minesLog.textContent='Game started. Click cells to reveal.';
+      renderMines();
+    });
+
+    // ---- AVIATOR (simple demo) ----
+    let aviatorTimer = null; let aviatorRunning=false; let aviatorMult=1; let aviatorCrashed=false; let aviatorStartSeed=null;
+    const aviLog = document.getElementById('aviator-log');
+    function startAviator(){
+      if(aviatorRunning) return;
+      aviatorRunning=true; aviatorCrashed=false; aviatorMult=1; aviLog.textContent='Round started.'; document.getElementById('aviator-state').textContent='Running';
+      // determine crash point randomly (demo)
+      const crashAt = 1 + Math.random()*10; // between 1x and 11x random
+      aviatorTimer = setInterval(()=>{
+        aviatorMult = Math.round((aviatorMult + 0.01)*100)/100;
+        document.getElementById('aviator-mult').textContent = aviatorMult.toFixed(2)+ 'x';
+        if(aviatorMult >= crashAt){
+          crashAviator();
+        }
+      },50);
+      document.getElementById('aviator-cashout').disabled=false;
+    }
+    function crashAviator(){
+      clearInterval(aviatorTimer); aviatorTimer=null; aviatorRunning=false; aviatorCrashed=true; document.getElementById('aviator-state').textContent='Crashed'; aviLog.textContent='Round crashed at '+aviatorMult.toFixed(2)+'x';
+      document.getElementById('aviator-cashout').disabled=true;
+    }
+    function cashoutAviator(){
+      if(!aviatorRunning) return; // can't cashout
+      clearInterval(aviatorTimer); aviatorTimer=null; aviatorRunning=false; document.getElementById('aviator-state').textContent='Cashed out'; aviLog.textContent='Cashed out at '+aviatorMult.toFixed(2)+'x'; document.getElementById('aviator-cashout').disabled=true;
+    }
+    document.getElementById('aviator-start').addEventListener('click',startAviator);
+    document.getElementById('aviator-cashout').addEventListener('click',cashoutAviator);
+
+    // ---- ROULETTE (simple) ----
+    const rouletteLog = document.getElementById('roulette-log');
+    function spinRoulette(){
+      const bet = Number(document.getElementById('roulette-bet').value)||0;
+      const choice = document.getElementById('roulette-choice').value;
+      const r = Math.floor(Math.random()*37); // 0..36, treat 0 as green
+      const color = (r===0)?'green':( [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36].includes(r) ? 'red' : 'black');
+      document.getElementById('roulette-last').textContent = r + ' ('+color+')';
+      let outcomeText = `Spun ${r} — ${color}. `;
+      if(choice===color){ outcomeText += 'You win! Payout: ' + (choice==='green'?14:2) + 'x'; }
+      else outcomeText += 'You lose.';
+      rouletteLog.textContent = outcomeText;
+    }
+    document.getElementById('roulette-spin').addEventListener('click',spinRoulette);
+  </script></body>
+</html>
