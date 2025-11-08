@@ -1,197 +1,353 @@
-<!doctype html>
-
+```html
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mini Games Demo — Mines | Aviator | Roulette</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Casino (Single HTML File)</title>
   <style>
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;padding:20px;background:#0f172a;color:#e6eef8}
-    .wrap{max-width:1000px;margin:0 auto}
-    header{display:flex;gap:12px;align-items:center}
-    h1{margin:0;font-size:20px}
-    nav{margin-top:18px;display:flex;gap:8px}
-    button.tab{padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#081027;color:inherit;cursor:pointer}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));padding:16px;border-radius:12px;margin-top:18px}
-    .grid{display:grid;gap:6px}
-    .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
-    .btn{padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
-    .btn.primary{background:#06b6d4;color:#042024}
-    .cell{width:44px;height:44px;border-radius:6px;background:#06202b;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
-    .cell.revealed{background:#0b3a3f;color:#fff}
-    .cell.mine{background:#7b1e1e;color:#fff}
-    .stat{margin-left:12px}
-    .log{margin-top:12px;font-size:13px;opacity:0.9}
-    footer{margin-top:18px;font-size:13px;color:#a8c0c8}
+    body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
+    .game { margin: 20px 0; border: 1px solid #ccc; padding: 15px; background: white; }
+    button { padding: 10px; margin: 5px; }
+    #balance { font-weight: bold; }
+    ul { list-style-type: none; padding: 0; }
+    li { margin: 5px 0; border-bottom: 1px solid #eee; padding: 5px; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Mini Games Demo — Mines | Aviator | Roulette</h1>
-      <div style="margin-left:auto;font-size:13px;opacity:0.9">Demo (no real money) — For production, legal compliance required.</div>
-    </header><nav>
-  <button class="tab" data-tab="mines">Mines</button>
-  <button class="tab" data-tab="aviator">Aviator</button>
-  <button class="tab" data-tab="roulette">Roulette</button>
-</nav>
-
-<div id="mines" class="card" style="display:none">
-  <div class="controls">
-    <label>Grid:
-      <select id="mines-size"><option value="5">5x5</option><option value="8">8x8</option><option value="10">10x10</option></select>
-    </label>
-    <label>Mines:
-      <input id="mines-count" type="number" value="5" min="1" style="width:64px" />
-    </label>
-    <button id="mines-start" class="btn primary">Start Game</button>
-    <div class="stat">Status: <span id="mines-status">Idle</span></div>
-    <div class="stat">Score (revealed): <span id="mines-score">0</span></div>
+  <h1>Demo Casino (Play Money - Single File Version)</h1>
+  <p>Balance: <span id="balance">Loading...</span></p>
+  <button onclick="resetBalance()">Reset Balance to 10,000</button>
+  
+  <div class="game">
+    <h2>Aviator (Crash)</h2>
+    <input id="aviator-bet" type="number" placeholder="Bet Amount" min="1" max="1000">
+    <input id="aviator-cashout" type="number" step="0.01" placeholder="Cashout Point" min="1">
+    <button onclick="playAviator()">Play</button>
+    <p id="aviator-result"></p>
   </div>
-  <div id="mines-board" class="grid"></div>
-  <div class="log" id="mines-log"></div>
-</div>
-
-<div id="aviator" class="card" style="display:none">
-  <div class="controls">
-    <label>Bet Amount: <input id="aviator-bet" value="10" style="width:80px" /></label>
-    <button id="aviator-start" class="btn primary">Start Round</button>
-    <button id="aviator-cashout" class="btn" disabled>Cashout</button>
-    <div class="stat">Multiplier: <span id="aviator-mult">1.00x</span></div>
-    <div class="stat">State: <span id="aviator-state">Idle</span></div>
+  
+  <div class="game">
+    <h2>Roulette</h2>
+    <input id="roulette-bet" type="number" placeholder="Bet Amount" min="1" max="1000">
+    <select id="roulette-type">
+      <option value="red">Red (2x)</option>
+      <option value="black">Black (2x)</option>
+      <option value="green">Green (35x)</option>
+      <option value="number">Specific Number (35x)</option>
+    </select>
+    <input id="roulette-number" type="number" placeholder="Number (0-36)" style="display:none;" min="0" max="36">
+    <button onclick="playRoulette()">Play</button>
+    <p id="roulette-result"></p>
   </div>
-  <div class="log" id="aviator-log"></div>
-</div>
-
-<div id="roulette" class="card" style="display:none">
-  <div class="controls">
-    <label>Bet Amount: <input id="roulette-bet" value="10" style="width:80px" /></label>
-    <label>Choice:
-      <select id="roulette-choice"><option value="red">Red</option><option value="black">Black</option><option value="green">Green (0)</option></select>
-    </label>
-    <button id="roulette-spin" class="btn primary">Spin</button>
-    <div class="stat">Last Result: <span id="roulette-last">-</span></div>
+  
+  <div class="game">
+    <h2>Mines</h2>
+    <input id="mines-bet" type="number" placeholder="Bet Amount" min="1" max="1000">
+    <input id="mines-count" type="number" placeholder="Mines Count (1-24)" min="1" max="24">
+    <input id="mines-position" type="number" placeholder="Click Position (0-24)" min="0" max="24">
+    <button onclick="playMines()">Play</button>
+    <p id="mines-result"></p>
   </div>
-  <div class="log" id="roulette-log"></div>
-</div>
+  
+  <div class="game">
+    <h2>Coinflip</h2>
+    <input id="coinflip-bet" type="number" placeholder="Bet Amount" min="1" max="1000">
+    <select id="coinflip-choice">
+      <option value="0">Heads</option>
+      <option value="1">Tails</option>
+    </select>
+    <button onclick="playCoinflip()">Play</button>
+    <p id="coinflip-result"></p>
+  </div>
+  
+  <h2>History</h2>
+  <ul id="history"></ul>
 
-<footer>
-  <strong>Important:</strong> This is a **demo** for learning and prototyping only. Do NOT use for real-money operations without proper licensing, KYC/AML, and legal advice.
-</footer>
+  <script>
+    // Constants
+    const HOUSE_EDGE = 0.01; // 1% house edge
+    const INITIAL_BALANCE = 10000.0;
 
-  </div>  <script>
-    // Tab switching
-    document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
-      document.querySelectorAll('.card').forEach(c=>c.style.display='none');
-      document.getElementById(b.dataset.tab).style.display='block';
-    }));
-    // Activate default
-    document.querySelector('.tab[data-tab="mines"]').click();
+    // Storage keys
+    const BALANCE_KEY = 'demo_balance';
+    const HISTORY_KEY = 'demo_history';
 
-    // ---- MINES GAME ----
-    const minesBoard = document.getElementById('mines-board');
-    const minesLog = document.getElementById('mines-log');
-    let minesState = null;
-
-    function makeBoard(size, mines){
-      const total = size*size;
-      const mineSet = new Set();
-      while(mineSet.size < mines) mineSet.add(Math.floor(Math.random()*total));
-      const cells = [];
-      for(let i=0;i<total;i++) cells.push({index:i, mine:mineSet.has(i), revealed:false});
-      return {size,total,cells,remaining:total-mines,revealed:0};
-    }
-
-    function renderMines(){
-      minesBoard.innerHTML='';
-      minesBoard.style.gridTemplateColumns = `repeat(${minesState.size},44px)`;
-      minesState.cells.forEach(c=>{
-        const el = document.createElement('div'); el.className='cell'+(c.revealed?' revealed':''); el.textContent='';
-        el.addEventListener('click',()=>onCellClick(c.index,el));
-        minesBoard.appendChild(el);
-      });
-      document.getElementById('mines-score').textContent = minesState.revealed;
-    }
-
-    function onCellClick(i,el){
-      if(minesState.cells[i].revealed) return;
-      minesState.cells[i].revealed = true;
-      if(minesState.cells[i].mine){
-        el.classList.add('mine'); el.textContent='💣';
-        document.getElementById('mines-status').textContent='Lost';
-        minesLog.textContent = 'You hit a mine. Game over.';
-        revealAllMines();
-      } else {
-        el.classList.add('revealed');
-        el.textContent = '';
-        minesState.revealed++;
-        document.getElementById('mines-score').textContent = minesState.revealed;
-        if(minesState.revealed >= minesState.remaining){
-          document.getElementById('mines-status').textContent='Won';
-          minesLog.textContent = 'You cleared the safe cells — YOU WIN!';
-          revealAllMines(false);
-        }
+    // Load balance and history from localStorage
+    function getBalance() {
+      let balance = parseFloat(localStorage.getItem(BALANCE_KEY));
+      if (isNaN(balance)) {
+        balance = INITIAL_BALANCE;
+        setBalance(balance);
       }
+      return balance;
     }
 
-    function revealAllMines(show=true){
-      const children = minesBoard.children;
-      minesState.cells.forEach((c,idx)=>{
-        const el = children[idx];
-        if(c.mine){ el.classList.add('mine'); el.textContent = show? '💣':''; }
+    function setBalance(balance) {
+      localStorage.setItem(BALANCE_KEY, balance.toFixed(2));
+      document.getElementById('balance').innerText = balance.toFixed(2);
+    }
+
+    function getHistory() {
+      let history = JSON.parse(localStorage.getItem(HISTORY_KEY));
+      if (!Array.isArray(history)) {
+        history = [];
+        setHistory(history);
+      }
+      return history;
+    }
+
+    function setHistory(history) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      loadHistoryUI();
+    }
+
+    function addToHistory(game, betAmount, payout, result) {
+      let history = getHistory();
+      history.unshift({ game, bet_amount: betAmount, payout, result: JSON.stringify(result) });
+      if (history.length > 50) history.pop(); // Limit to last 50
+      setHistory(history);
+    }
+
+    function loadHistoryUI() {
+      const list = document.getElementById('history');
+      list.innerHTML = '';
+      getHistory().forEach(r => {
+        const li = document.createElement('li');
+        li.innerText = `${r.game} - Bet: ${r.bet_amount}, Payout: ${r.payout}, Result: ${r.result}`;
+        list.appendChild(li);
       });
     }
 
-    document.getElementById('mines-start').addEventListener('click',()=>{
-      const size = parseInt(document.getElementById('mines-size').value);
-      const mines = parseInt(document.getElementById('mines-count').value);
-      minesState = makeBoard(size, Math.max(1,Math.min(mines, size*size-1)));
-      document.getElementById('mines-status').textContent='Playing';
-      minesLog.textContent='Game started. Click cells to reveal.';
-      renderMines();
+    function resetBalance() {
+      setBalance(INITIAL_BALANCE);
+      alert('Balance reset to 10,000 play money');
+    }
+
+    // Provably fair helpers (using Crypto API)
+    async function genSeed() {
+      const array = new Uint8Array(32);
+      window.crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgBuffer);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    async function hmacSha256(key, message) {
+      const encKey = await window.crypto.subtle.importKey(
+        'raw',
+        new TextEncoder().encode(key),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const signature = await window.crypto.subtle.sign('HMAC', encKey, new TextEncoder().encode(message));
+      return Array.from(new Uint8Array(signature))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    async function deterministicNumberFromSeed(serverSeed, clientSeed, nonce = '0') {
+      const hash = await sha256(serverSeed + '|' + clientSeed + '|' + nonce);
+      return parseInt(hash.slice(0, 13), 16);
+    }
+
+    async function generateCrashPoint(serverSeed, clientSeed) {
+      const hash = await sha256(serverSeed + '|' + clientSeed + '|' + 'crash');
+      const h = parseInt(hash.slice(0, 13), 16);
+      const e = Math.pow(2, 52);
+      return Math.max(1, Math.floor((100 * (1 - HOUSE_EDGE) * e) / (e - h)) / 100);
+    }
+
+    async function generateRouletteNumber(serverSeed, clientSeed) {
+      const num = await deterministicNumberFromSeed(serverSeed, clientSeed, 'roulette');
+      return num % 37;
+    }
+
+    async function generateMinesMask(serverSeed, clientSeed, minesCount) {
+      const n = await deterministicNumberFromSeed(serverSeed, clientSeed, 'mines');
+      const totalCells = 25;
+      let array = Array.from({length: totalCells}, (_, i) => i);
+      let temp = n;
+      
+      for (let i = totalCells - 1; i > 0; i--) {
+        const j = temp % (i + 1);
+        temp = Math.floor(temp / (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      
+      return array.slice(0, minesCount);
+    }
+
+    async function generateCoinflip(serverSeed, clientSeed) {
+      const num = await deterministicNumberFromSeed(serverSeed, clientSeed, 'coinflip');
+      return num % 2; // 0 heads, 1 tails
+    }
+
+    function calculatePayout(rawMultiplier, betAmount) {
+      return Math.floor(rawMultiplier * betAmount * 100) / 100;
+    }
+
+    // Game functions
+    async function startAndResolveGame(game, betAmount, params) {
+      let balance = getBalance();
+      if (betAmount <= 0 || betAmount > 1000 || balance < betAmount) {
+        throw new Error('Invalid bet amount or insufficient balance');
+      }
+      
+      balance -= betAmount;
+      setBalance(balance);
+      
+      const serverSeed = await genSeed();
+      const clientSeed = 'default_' + Date.now(); // Simulate client seed
+      const roundId = 'r_' + Math.random().toString(36).slice(2);
+      const hmac = await hmacSha256(serverSeed, roundId);
+      
+      // Resolve
+      let result = {}, payout = 0, rawMultiplier = 0;
+      
+      if (game === 'aviator') {
+        const crashPoint = await generateCrashPoint(serverSeed, clientSeed);
+        const cashoutPoint = params.cashoutPoint || 1.0;
+        if (cashoutPoint < crashPoint) {
+          rawMultiplier = cashoutPoint;
+          payout = calculatePayout(rawMultiplier, betAmount);
+        }
+        result = {
+          crashPoint: Math.round(crashPoint * 100) / 100,
+          cashoutPoint: Math.round(cashoutPoint * 100) / 100,
+          won: payout > 0
+        };
+        
+      } else if (game === 'roulette') {
+        const number = await generateRouletteNumber(serverSeed, clientSeed);
+        const betType = params.betType || 'red';
+        const redNumbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+        
+        let won = false;
+        let multiplier = 0;
+        
+        if (betType === 'number' && params.number === number) {
+          multiplier = 35 * (1 - HOUSE_EDGE);
+          won = true;
+        } else if (betType === 'red' && redNumbers.includes(number) && number !== 0) {
+          multiplier = 2 * (1 - HOUSE_EDGE);
+          won = true;
+        } else if (betType === 'black' && !redNumbers.includes(number) && number !== 0) {
+          multiplier = 2 * (1 - HOUSE_EDGE);
+          won = true;
+        } else if (betType === 'green' && number === 0) {
+          multiplier = 35 * (1 - HOUSE_EDGE);
+          won = true;
+        }
+        
+        if (won) {
+          rawMultiplier = multiplier;
+          payout = calculatePayout(rawMultiplier, betAmount);
+        }
+        
+        result = { number, betType, won, multiplier };
+        
+      } else if (game === 'mines') {
+        const minesCount = params.minesCount || 5;
+        const minePositions = await generateMinesMask(serverSeed, clientSeed, minesCount);
+        const clickedPosition = params.clickedPosition || 0;
+        
+        const isMine = minePositions.includes(clickedPosition);
+        
+        if (!isMine) {
+          rawMultiplier = (25 / (25 - minesCount)) * (1 - HOUSE_EDGE);
+          payout = calculatePayout(rawMultiplier, betAmount);
+        }
+        
+        result = {
+          minePositions,
+          clickedPosition,
+          isMine,
+          minesCount,
+          multiplier: Math.round(rawMultiplier * 100) / 100
+        };
+        
+      } else if (game === 'coinflip') {
+        const outcome = await generateCoinflip(serverSeed, clientSeed);
+        const userChoice = params.choice || 0;
+        
+        let won = false;
+        if (parseInt(userChoice) === outcome) {
+          rawMultiplier = 2 * (1 - HOUSE_EDGE);
+          payout = calculatePayout(rawMultiplier, betAmount);
+          won = true;
+        }
+        
+        result = { outcome, userChoice, won, multiplier: rawMultiplier };
+      }
+      
+      if (payout > 0) {
+        balance += payout;
+        setBalance(balance);
+      }
+      
+      addToHistory(game, betAmount, payout, result);
+      
+      return { result, payout, newBalance: balance, serverSeed, hmac };
+    }
+
+    // UI handlers
+    async function playAviator() {
+      try {
+        const bet = parseFloat(document.getElementById('aviator-bet').value);
+        const cashout = parseFloat(document.getElementById('aviator-cashout').value);
+        const data = await startAndResolveGame('aviator', bet, { cashoutPoint: cashout });
+        document.getElementById('aviator-result').innerText = `Crash at ${data.result.crashPoint}x, Cashed at ${data.result.cashoutPoint}x, Payout: ${data.payout}`;
+      } catch (e) { alert(e.message); }
+    }
+
+    async function playRoulette() {
+      try {
+        const bet = parseFloat(document.getElementById('roulette-bet').value);
+        const type = document.getElementById('roulette-type').value;
+        const number = parseInt(document.getElementById('roulette-number').value);
+        const params = { betType: type };
+        if (type === 'number') params.number = number;
+        const data = await startAndResolveGame('roulette', bet, params);
+        document.getElementById('roulette-result').innerText = `Number: ${data.result.number}, Won: ${data.result.won ? 'Yes' : 'No'}, Payout: ${data.payout}`;
+      } catch (e) { alert(e.message); }
+    }
+
+    async function playMines() {
+      try {
+        const bet = parseFloat(document.getElementById('mines-bet').value);
+        const count = parseInt(document.getElementById('mines-count').value);
+        const position = parseInt(document.getElementById('mines-position').value);
+        const data = await startAndResolveGame('mines', bet, { minesCount: count, clickedPosition: position });
+        document.getElementById('mines-result').innerText = `Mine? ${data.result.isMine ? 'Yes' : 'No'}, Multiplier: ${data.result.multiplier}, Payout: ${data.payout}`;
+      } catch (e) { alert(e.message); }
+    }
+
+    async function playCoinflip() {
+      try {
+        const bet = parseFloat(document.getElementById('coinflip-bet').value);
+        const choice = document.getElementById('coinflip-choice').value;
+        const data = await startAndResolveGame('coinflip', bet, { choice });
+        document.getElementById('coinflip-result').innerText = `Outcome: ${data.result.outcome === 0 ? 'Heads' : 'Tails'}, Won: ${data.result.won ? 'Yes' : 'No'}, Payout: ${data.payout}`;
+      } catch (e) { alert(e.message); }
+    }
+
+    // Event listeners
+    document.getElementById('roulette-type').addEventListener('change', (e) => {
+      document.getElementById('roulette-number').style.display = e.target.value === 'number' ? 'inline' : 'none';
     });
 
-    // ---- AVIATOR (simple demo) ----
-    let aviatorTimer = null; let aviatorRunning=false; let aviatorMult=1; let aviatorCrashed=false; let aviatorStartSeed=null;
-    const aviLog = document.getElementById('aviator-log');
-    function startAviator(){
-      if(aviatorRunning) return;
-      aviatorRunning=true; aviatorCrashed=false; aviatorMult=1; aviLog.textContent='Round started.'; document.getElementById('aviator-state').textContent='Running';
-      // determine crash point randomly (demo)
-      const crashAt = 1 + Math.random()*10; // between 1x and 11x random
-      aviatorTimer = setInterval(()=>{
-        aviatorMult = Math.round((aviatorMult + 0.01)*100)/100;
-        document.getElementById('aviator-mult').textContent = aviatorMult.toFixed(2)+ 'x';
-        if(aviatorMult >= crashAt){
-          crashAviator();
-        }
-      },50);
-      document.getElementById('aviator-cashout').disabled=false;
-    }
-    function crashAviator(){
-      clearInterval(aviatorTimer); aviatorTimer=null; aviatorRunning=false; aviatorCrashed=true; document.getElementById('aviator-state').textContent='Crashed'; aviLog.textContent='Round crashed at '+aviatorMult.toFixed(2)+'x';
-      document.getElementById('aviator-cashout').disabled=true;
-    }
-    function cashoutAviator(){
-      if(!aviatorRunning) return; // can't cashout
-      clearInterval(aviatorTimer); aviatorTimer=null; aviatorRunning=false; document.getElementById('aviator-state').textContent='Cashed out'; aviLog.textContent='Cashed out at '+aviatorMult.toFixed(2)+'x'; document.getElementById('aviator-cashout').disabled=true;
-    }
-    document.getElementById('aviator-start').addEventListener('click',startAviator);
-    document.getElementById('aviator-cashout').addEventListener('click',cashoutAviator);
-
-    // ---- ROULETTE (simple) ----
-    const rouletteLog = document.getElementById('roulette-log');
-    function spinRoulette(){
-      const bet = Number(document.getElementById('roulette-bet').value)||0;
-      const choice = document.getElementById('roulette-choice').value;
-      const r = Math.floor(Math.random()*37); // 0..36, treat 0 as green
-      const color = (r===0)?'green':( [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36].includes(r) ? 'red' : 'black');
-      document.getElementById('roulette-last').textContent = r + ' ('+color+')';
-      let outcomeText = `Spun ${r} — ${color}. `;
-      if(choice===color){ outcomeText += 'You win! Payout: ' + (choice==='green'?14:2) + 'x'; }
-      else outcomeText += 'You lose.';
-      rouletteLog.textContent = outcomeText;
-    }
-    document.getElementById('roulette-spin').addEventListener('click',spinRoulette);
-  </script></body>
+    // Initial load
+    setBalance(getBalance());
+    loadHistoryUI();
+  </script>
+</body>
 </html>
+```
